@@ -237,8 +237,14 @@ export default function FollowTheSun() {
       twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
       const startDate = twoWeeksAgo.toISOString().split('T')[0];
 
-      const [readinessRes] = await Promise.all([
+      const [readinessRes, sleepRes, activityRes] = await Promise.all([
         fetch(`https://api.ouraring.com/v2/usercollection/daily_readiness?start_date=${startDate}&end_date=${today}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`https://api.ouraring.com/v2/usercollection/daily_sleep?start_date=${startDate}&end_date=${today}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        fetch(`https://api.ouraring.com/v2/usercollection/daily_activity?start_date=${startDate}&end_date=${today}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
@@ -246,8 +252,23 @@ export default function FollowTheSun() {
       if (!readinessRes.ok) throw new Error('Failed to fetch Oura data');
 
       const readinessData = await readinessRes.json();
+      const sleepData = await sleepRes.json();
+      const activityData = await activityRes.json();
+
+      // Get today's data
+      const todayReadiness = readinessData.data?.find(d => d.day === today);
+      const todaySleep = sleepData.data?.find(d => d.day === today);
+      const todayActivity = activityData.data?.find(d => d.day === today);
+
       setOuraData({
-        readiness: readinessData.data || []
+        readiness: readinessData.data || [],
+        sleep: sleepData.data || [],
+        activity: activityData.data || [],
+        today: {
+          readiness: todayReadiness?.score,
+          sleep: todaySleep?.score,
+          steps: todayActivity?.steps
+        }
       });
     } catch (error) {
       console.error('Error fetching Oura data:', error);
@@ -642,6 +663,25 @@ export default function FollowTheSun() {
               </button>
             </div>
           )}
+
+          {/* Today's Oura Stats */}
+          {ouraData?.today && (ouraData.today.readiness || ouraData.today.sleep || ouraData.today.steps) && (
+            <div style={{ marginTop: '1rem', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
+              <div style={{ background: 'rgba(107, 142, 90, 0.1)', borderRadius: '8px', padding: '0.5rem' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#5a7a4d' }}>{ouraData.today.readiness || '--'}</div>
+                <div style={{ fontSize: '0.7rem', color: '#7a8c6f' }}>Readiness</div>
+              </div>
+              <div style={{ background: 'rgba(107, 142, 90, 0.1)', borderRadius: '8px', padding: '0.5rem' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#5a7a4d' }}>{ouraData.today.sleep || '--'}</div>
+                <div style={{ fontSize: '0.7rem', color: '#7a8c6f' }}>Sleep</div>
+              </div>
+              <div style={{ background: 'rgba(107, 142, 90, 0.1)', borderRadius: '8px', padding: '0.5rem' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#5a7a4d' }}>{ouraData.today.steps ? (ouraData.today.steps / 1000).toFixed(1) + 'k' : '--'}</div>
+                <div style={{ fontSize: '0.7rem', color: '#7a8c6f' }}>Steps</div>
+              </div>
+            </div>
+          )}
+
           {renderOuraChart()}
         </div>
       </div>
