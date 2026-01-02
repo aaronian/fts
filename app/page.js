@@ -13,6 +13,11 @@ export default function FollowTheSun() {
   const [userId, setUserId] = useState('');
   const [editingId, setEditingId] = useState(null);
 
+  // Username login
+  const [username, setUsername] = useState('');
+  const [usernameInput, setUsernameInput] = useState('');
+  const [needsUsername, setNeedsUsername] = useState(false);
+
   // New entry form
   const [duration, setDuration] = useState('');
   const [activity, setActivity] = useState('');
@@ -39,14 +44,32 @@ export default function FollowTheSun() {
 
   // Initialize user
   useEffect(() => {
-    let storedUserId = localStorage.getItem('userId');
-    if (!storedUserId) {
-      storedUserId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-      localStorage.setItem('userId', storedUserId);
+    const storedUsername = localStorage.getItem('fts_username');
+    if (storedUsername) {
+      setUsername(storedUsername);
+      const oderId = 'fts_' + storedUsername.toLowerCase().trim();
+      setUserId(oderId);
+      loadData(oderId);
+    } else {
+      setNeedsUsername(true);
+      setLoading(false);
     }
-    setUserId(storedUserId);
-    loadData(storedUserId);
   }, []);
+
+  const handleUsernameSubmit = () => {
+    const trimmed = usernameInput.trim();
+    if (!trimmed) {
+      alert('Please enter a username');
+      return;
+    }
+    localStorage.setItem('fts_username', trimmed);
+    setUsername(trimmed);
+    const oderId = 'fts_' + trimmed.toLowerCase();
+    setUserId(oderId);
+    setNeedsUsername(false);
+    setLoading(true);
+    loadData(oderId);
+  };
 
   const loadData = async (uid) => {
     try {
@@ -293,6 +316,94 @@ export default function FollowTheSun() {
     );
   }
 
+  if (needsUsername) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #f5f1e8 0%, #e8f4e0 50%, #d4e7f7 100%)',
+        fontFamily: '"Nunito", system-ui, sans-serif',
+        padding: '2rem'
+      }}>
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '24px',
+          padding: '2.5rem',
+          maxWidth: '400px',
+          width: '100%',
+          boxShadow: '0 8px 32px rgba(90, 122, 77, 0.15)',
+          textAlign: 'center'
+        }}>
+          <Sun size={48} color="#fbbf24" style={{ marginBottom: '1rem' }} />
+          <h1 style={{
+            fontSize: '2rem',
+            fontWeight: '700',
+            color: '#5a7a4d',
+            margin: '0 0 0.5rem 0'
+          }}>
+            Follow the Sun
+          </h1>
+          <p style={{
+            color: '#7a8c6f',
+            marginBottom: '1.5rem',
+            fontSize: '0.95rem'
+          }}>
+            Enter a username to sync across devices
+          </p>
+          <input
+            type="text"
+            value={usernameInput}
+            onChange={(e) => setUsernameInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleUsernameSubmit()}
+            placeholder="Your name (e.g., aaron)"
+            style={{
+              width: '100%',
+              padding: '1rem',
+              border: '2px solid #c4d5b8',
+              borderRadius: '12px',
+              fontSize: '1rem',
+              marginBottom: '1rem',
+              fontFamily: 'inherit',
+              boxSizing: 'border-box',
+              textAlign: 'center'
+            }}
+            autoFocus
+          />
+          <button
+            onClick={handleUsernameSubmit}
+            style={{
+              background: 'linear-gradient(135deg, #6b8e5a 0%, #8fac7e 100%)',
+              color: 'white',
+              border: 'none',
+              padding: '1rem 2rem',
+              borderRadius: '12px',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              width: '100%',
+              transition: 'transform 0.2s',
+              boxShadow: '0 4px 12px rgba(107, 142, 90, 0.3)'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            Get Started
+          </button>
+          <p style={{
+            color: '#7a8c6f',
+            fontSize: '0.8rem',
+            marginTop: '1rem'
+          }}>
+            Use the same name on all your devices to sync data
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -325,6 +436,41 @@ export default function FollowTheSun() {
           marginBottom: '3rem',
           animation: 'fadeIn 0.8s ease-out'
         }}>
+          <div style={{
+            display: 'inline-block',
+            background: 'rgba(107, 142, 90, 0.15)',
+            padding: '0.4rem 1rem',
+            borderRadius: '20px',
+            marginBottom: '0.75rem',
+            fontSize: '0.85rem',
+            color: '#5a7a4d'
+          }}>
+            <span style={{ fontWeight: '600' }}>{username}</span>
+            <button
+              onClick={() => {
+                if (confirm('Switch user? This will log you out on this device.')) {
+                  localStorage.removeItem('fts_username');
+                  setUsername('');
+                  setUserId('');
+                  setEntries([]);
+                  setOuraToken('');
+                  setIsTokenSet(false);
+                  setNeedsUsername(true);
+                }
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#7a8c6f',
+                marginLeft: '0.5rem',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+                textDecoration: 'underline'
+              }}
+            >
+              switch
+            </button>
+          </div>
           <h1 style={{
             fontSize: '3.5rem',
             fontWeight: '700',
