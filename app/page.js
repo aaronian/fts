@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useUser, SignOutButton } from '@clerk/nextjs';
+import { useUser, SignOutButton, SignIn } from '@clerk/nextjs';
 import { Sun, Moon, Plus, Pencil, Trash2, Check, X, Menu, Cloud, CloudRain, CloudSnow, Wind, Sunrise, Sunset, LogOut } from 'lucide-react';
 
 export default function FollowTheSun() {
@@ -508,12 +508,31 @@ export default function FollowTheSun() {
   const moonPhase = getMoonPhase();
   const moonEvents = getNextMoonEvents();
 
-  if (!isLoaded || loading) {
+  if (!isLoaded) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #f5f1e8 0%, #e8f4e0 100%)', fontFamily: '"Nunito", system-ui, sans-serif' }}>
         <div style={{ textAlign: 'center', color: '#5a7a4d' }}>
           <Sun size={48} style={{ animation: 'spin 2s linear infinite' }} />
           <p style={{ marginTop: '1rem' }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #f5f1e8 0%, #e8f4e0 100%)', fontFamily: '"Nunito", system-ui, sans-serif' }}>
+        <SignIn />
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #f5f1e8 0%, #e8f4e0 100%)', fontFamily: '"Nunito", system-ui, sans-serif' }}>
+        <div style={{ textAlign: 'center', color: '#5a7a4d' }}>
+          <Sun size={48} style={{ animation: 'spin 2s linear infinite' }} />
+          <p style={{ marginTop: '1rem' }}>Loading your data...</p>
         </div>
       </div>
     );
