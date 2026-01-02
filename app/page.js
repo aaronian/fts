@@ -1,9 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, TreePine, Plus, Pencil, Trash2, Check, X, Menu, Cloud, CloudRain, CloudSnow, Wind, Thermometer, Sunrise, Sunset, Settings } from 'lucide-react';
+import { useUser, SignOutButton } from '@clerk/nextjs';
+import { Sun, Moon, Plus, Pencil, Trash2, Check, X, Menu, Cloud, CloudRain, CloudSnow, Wind, Sunrise, Sunset, LogOut } from 'lucide-react';
 
 export default function FollowTheSun() {
+  const { user, isLoaded } = useUser();
+
   const [entries, setEntries] = useState([]);
   const [ouraData, setOuraData] = useState(null);
   const [ouraToken, setOuraToken] = useState('');
@@ -11,13 +14,7 @@ export default function FollowTheSun() {
   const [isTokenSet, setIsTokenSet] = useState(false);
   const [showAddEntry, setShowAddEntry] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState('');
   const [editingId, setEditingId] = useState(null);
-
-  // Username login
-  const [username, setUsername] = useState('');
-  const [usernameInput, setUsernameInput] = useState('');
-  const [needsUsername, setNeedsUsername] = useState(false);
 
   // Sidebar
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -50,22 +47,14 @@ export default function FollowTheSun() {
     }
   }, [showAddEntry]);
 
-  // Initialize user
+  // Initialize when user is loaded
   useEffect(() => {
-    const storedUsername = localStorage.getItem('fts_username');
-    if (storedUsername) {
-      setUsername(storedUsername);
-      const oderId = 'fts_' + storedUsername.toLowerCase().trim();
-      setUserId(oderId);
-      loadData(oderId);
-    } else {
-      setNeedsUsername(true);
-      setLoading(false);
+    if (isLoaded && user) {
+      loadData(user.id);
     }
-
     // Charlotte, NC (28206)
     setLocation({ lat: 35.2271, lon: -80.8431 });
-  }, []);
+  }, [isLoaded, user]);
 
   // Fetch weather when location is available
   useEffect(() => {
@@ -170,22 +159,8 @@ export default function FollowTheSun() {
     return { position: Math.min(100, Math.max(0, position)), isNight: false };
   };
 
-  const handleUsernameSubmit = () => {
-    const trimmed = usernameInput.trim();
-    if (!trimmed) {
-      alert('Please enter a username');
-      return;
-    }
-    localStorage.setItem('fts_username', trimmed);
-    setUsername(trimmed);
-    const oderId = 'fts_' + trimmed.toLowerCase();
-    setUserId(oderId);
-    setNeedsUsername(false);
-    setLoading(true);
-    loadData(oderId);
-  };
-
   const loadData = async (uid) => {
+    setLoading(true);
     try {
       const entriesRes = await fetch(`/api/entries?userId=${uid}`);
       if (entriesRes.ok) {
@@ -209,6 +184,9 @@ export default function FollowTheSun() {
       setLoading(false);
     }
   };
+
+  // Helper to get current user ID
+  const userId = user?.id;
 
   const saveOuraToken = async () => {
     if (!ouraTokenInput.trim()) return;
@@ -530,37 +508,12 @@ export default function FollowTheSun() {
   const moonPhase = getMoonPhase();
   const moonEvents = getNextMoonEvents();
 
-  if (loading) {
+  if (!isLoaded || loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #f5f1e8 0%, #e8f4e0 100%)', fontFamily: '"Nunito", system-ui, sans-serif' }}>
         <div style={{ textAlign: 'center', color: '#5a7a4d' }}>
           <Sun size={48} style={{ animation: 'spin 2s linear infinite' }} />
           <p style={{ marginTop: '1rem' }}>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (needsUsername) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #f5f1e8 0%, #e8f4e0 50%, #d4e7f7 100%)', fontFamily: '"Nunito", system-ui, sans-serif', padding: '2rem' }}>
-        <div style={{ background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(10px)', borderRadius: '24px', padding: '2.5rem', maxWidth: '400px', width: '100%', boxShadow: '0 8px 32px rgba(90, 122, 77, 0.15)', textAlign: 'center' }}>
-          <Sun size={48} color="#fbbf24" style={{ marginBottom: '1rem' }} />
-          <h1 style={{ fontSize: '2rem', fontWeight: '700', color: '#5a7a4d', margin: '0 0 0.5rem 0' }}>Follow the Sun</h1>
-          <p style={{ color: '#7a8c6f', marginBottom: '1.5rem', fontSize: '0.95rem' }}>Enter a username to sync across devices</p>
-          <input
-            type="text"
-            value={usernameInput}
-            onChange={(e) => setUsernameInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleUsernameSubmit()}
-            placeholder="Your name (e.g., aaron)"
-            style={{ width: '100%', padding: '1rem', border: '2px solid #c4d5b8', borderRadius: '12px', fontSize: '1rem', marginBottom: '1rem', fontFamily: 'inherit', boxSizing: 'border-box', textAlign: 'center' }}
-            autoFocus
-          />
-          <button onClick={handleUsernameSubmit} style={{ background: 'linear-gradient(135deg, #6b8e5a 0%, #8fac7e 100%)', color: 'white', border: 'none', padding: '1rem 2rem', borderRadius: '12px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer', width: '100%', boxShadow: '0 4px 12px rgba(107, 142, 90, 0.3)' }}>
-            Get Started
-          </button>
-          <p style={{ color: '#7a8c6f', fontSize: '0.8rem', marginTop: '1rem' }}>Use the same name on all your devices to sync data</p>
         </div>
       </div>
     );
@@ -691,9 +644,13 @@ export default function FollowTheSun() {
         {/* Header */}
         <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
           <div>
-            <div style={{ display: 'inline-block', background: 'rgba(107, 142, 90, 0.15)', padding: '0.3rem 0.8rem', borderRadius: '16px', fontSize: '0.8rem', color: '#5a7a4d', marginBottom: '0.25rem' }}>
-              <span style={{ fontWeight: '600' }}>{username}</span>
-              <button onClick={() => { if (confirm('Switch user?')) { localStorage.removeItem('fts_username'); window.location.reload(); }}} style={{ background: 'none', border: 'none', color: '#7a8c6f', marginLeft: '0.5rem', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline' }}>switch</button>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(107, 142, 90, 0.15)', padding: '0.3rem 0.8rem', borderRadius: '16px', fontSize: '0.8rem', color: '#5a7a4d', marginBottom: '0.25rem' }}>
+              <span style={{ fontWeight: '600' }}>{user?.firstName || user?.emailAddresses?.[0]?.emailAddress?.split('@')[0] || 'User'}</span>
+              <SignOutButton>
+                <button style={{ background: 'none', border: 'none', color: '#7a8c6f', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 0 }} title="Sign out">
+                  <LogOut size={14} />
+                </button>
+              </SignOutButton>
             </div>
             <h1 style={{ fontSize: '1.75rem', fontWeight: '700', color: '#5a7a4d', margin: 0 }}>Follow the Sun</h1>
           </div>
