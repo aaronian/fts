@@ -63,18 +63,8 @@ export default function FollowTheSun() {
       setLoading(false);
     }
 
-    // Get location for weather
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-        },
-        () => {
-          // Default to a location if denied
-          setLocation({ lat: 40.7128, lon: -74.0060 });
-        }
-      );
-    }
+    // Charlotte, NC (28206)
+    setLocation({ lat: 35.2271, lon: -80.8431 });
   }, []);
 
   // Fetch weather when location is available
@@ -87,7 +77,7 @@ export default function FollowTheSun() {
   const fetchWeather = async (lat, lon) => {
     try {
       const res = await fetch(
-        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto&forecast_days=1`
+        `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto&forecast_days=1&temperature_unit=fahrenheit`
       );
       const data = await res.json();
       setWeather({
