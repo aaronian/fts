@@ -28,6 +28,9 @@ export default function FollowTheSun() {
   // New entry form
   const [duration, setDuration] = useState('');
   const [activity, setActivity] = useState('');
+
+  // 2026 Progress activity dropdown
+  const [selectedProgressActivity, setSelectedProgressActivity] = useState('');
   const [customDuration, setCustomDuration] = useState('');
   const [entryDate, setEntryDate] = useState('');
 
@@ -384,6 +387,62 @@ export default function FollowTheSun() {
     };
   };
 
+  // 2026 Progress stats with projection and category breakdown
+  const get2026ProgressStats = () => {
+    const year2026 = entries.filter(e => new Date(e.date).getFullYear() === 2026);
+    const totalMinutes = year2026.reduce((sum, e) => sum + e.duration, 0);
+
+    // Calculate days elapsed since Jan 1, 2026
+    const startOf2026 = new Date('2026-01-01');
+    const now = new Date();
+    const daysElapsed = Math.max(1, Math.floor((now - startOf2026) / (1000 * 60 * 60 * 24)) + 1);
+
+    // Daily average and projection
+    const avgMinutesPerDay = totalMinutes / daysElapsed;
+    const projectedYearMinutes = avgMinutesPerDay * 365;
+    const projectedYearHours = Math.round(projectedYearMinutes / 60);
+
+    // Detailed category stats
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const categoryStats = {};
+    categories.forEach(cat => {
+      const catEntries = year2026.filter(e => e.activity === cat);
+      const catMinutes = catEntries.reduce((sum, e) => sum + e.duration, 0);
+      const sessionCount = catEntries.length;
+
+      // Find most common day of the week
+      const dayCounts = {};
+      catEntries.forEach(e => {
+        const day = new Date(e.date).getDay();
+        dayCounts[day] = (dayCounts[day] || 0) + 1;
+      });
+      let mostCommonDay = null;
+      let maxCount = 0;
+      Object.entries(dayCounts).forEach(([day, count]) => {
+        if (count > maxCount) {
+          maxCount = count;
+          mostCommonDay = dayNames[parseInt(day)];
+        }
+      });
+
+      categoryStats[cat] = {
+        totalHours: Math.floor(catMinutes / 60),
+        totalMins: catMinutes % 60,
+        sessionCount,
+        avgPerSession: sessionCount > 0 ? Math.round(catMinutes / sessionCount) : 0,
+        mostCommonDay: mostCommonDay || 'N/A'
+      };
+    });
+
+    return {
+      totalHours: Math.floor(totalMinutes / 60),
+      totalMins: totalMinutes % 60,
+      avgMinutesPerDay: Math.round(avgMinutesPerDay),
+      projectedYearHours,
+      categoryStats
+    };
+  };
+
   // Calendar heatmap data
   const getHeatmapData = () => {
     const data = {};
@@ -504,6 +563,7 @@ export default function FollowTheSun() {
 
   const stats = getStats();
   const yearStats = getYearStats();
+  const progressStats = get2026ProgressStats();
   const sunPosition = getSunPosition();
   const moonPhase = getMoonPhase();
   const moonEvents = getNextMoonEvents();
@@ -720,6 +780,72 @@ export default function FollowTheSun() {
             </div>
           </div>
         )}
+
+        {/* 2026 Progress Section */}
+        <div style={{ background: 'rgba(255, 255, 255, 0.85)', backdropFilter: 'blur(10px)', borderRadius: '20px', padding: '1.25rem', marginBottom: '1rem', boxShadow: '0 4px 16px rgba(90, 122, 77, 0.12)' }}>
+          <h3 style={{ fontSize: '1rem', color: '#5a7a4d', margin: '0 0 1rem 0', fontWeight: '700' }}>2026 Progress</h3>
+
+          {/* Year Total and Projection */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            <div>
+              <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#5a7a4d' }}>{progressStats.totalHours}h {progressStats.totalMins}m</div>
+              <div style={{ fontSize: '0.8rem', color: '#7a8c6f' }}>Year Total</div>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#6b8e5a' }}>{progressStats.projectedYearHours}h</div>
+              <div style={{ fontSize: '0.8rem', color: '#7a8c6f' }}>Projected ({progressStats.avgMinutesPerDay} min/day avg)</div>
+            </div>
+          </div>
+
+          {/* Category Breakdown */}
+          <div style={{ borderTop: '1px solid rgba(122, 140, 111, 0.2)', paddingTop: '0.75rem' }}>
+            <div style={{ fontSize: '0.8rem', color: '#7a8c6f', marginBottom: '0.5rem', fontWeight: '600' }}>By Activity</div>
+            <select
+              value={selectedProgressActivity}
+              onChange={(e) => setSelectedProgressActivity(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.6rem 0.75rem',
+                border: '2px solid #c4d5b8',
+                borderRadius: '10px',
+                fontSize: '0.9rem',
+                fontFamily: 'inherit',
+                color: '#5a7a4d',
+                background: 'white',
+                cursor: 'pointer',
+                marginBottom: selectedProgressActivity ? '0.75rem' : 0
+              }}
+            >
+              <option value="">Select an activity...</option>
+              {categories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+
+            {selectedProgressActivity && progressStats.categoryStats[selectedProgressActivity] && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem', textAlign: 'center' }}>
+                <div style={{ background: 'rgba(107, 142, 90, 0.1)', borderRadius: '10px', padding: '0.6rem' }}>
+                  <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#5a7a4d' }}>
+                    {progressStats.categoryStats[selectedProgressActivity].totalHours > 0 && `${progressStats.categoryStats[selectedProgressActivity].totalHours}h `}{progressStats.categoryStats[selectedProgressActivity].totalMins}m
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: '#7a8c6f' }}>Total</div>
+                </div>
+                <div style={{ background: 'rgba(107, 142, 90, 0.1)', borderRadius: '10px', padding: '0.6rem' }}>
+                  <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#5a7a4d' }}>
+                    {progressStats.categoryStats[selectedProgressActivity].avgPerSession}m
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: '#7a8c6f' }}>Avg/Session</div>
+                </div>
+                <div style={{ background: 'rgba(107, 142, 90, 0.1)', borderRadius: '10px', padding: '0.6rem' }}>
+                  <div style={{ fontSize: '1.1rem', fontWeight: '700', color: '#5a7a4d' }}>
+                    {progressStats.categoryStats[selectedProgressActivity].mostCommonDay}
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: '#7a8c6f' }}>Most Common Day</div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Stats Bar */}
         <div style={{ background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', borderRadius: '16px', padding: '1rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-around', boxShadow: '0 2px 8px rgba(90, 122, 77, 0.08)' }}>
