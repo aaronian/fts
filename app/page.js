@@ -193,11 +193,15 @@ export default function FollowTheSun() {
           setCategories(settings.categories);
         } else {
           // First-time user: save defaults so they're persisted
-          await fetch('/api/settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: uid, categories: DEFAULT_CATEGORIES })
-          });
+          try {
+            await fetch('/api/settings', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: uid, categories: DEFAULT_CATEGORIES })
+            });
+          } catch (error) {
+            console.error('Error seeding default categories:', error);
+          }
         }
       }
     } catch (error) {
@@ -252,6 +256,8 @@ export default function FollowTheSun() {
   };
 
   const removeCategory = (name) => {
+    const target = categories.find(c => c.name === name);
+    if (!target || !target.removable) return;
     saveCategories(categories.filter(c => c.name !== name));
   };
 
