@@ -237,6 +237,7 @@ export default function FollowTheSun() {
   };
 
   const saveCategories = async (updatedCategories) => {
+    const previousCategories = categories;
     setCategories(updatedCategories);
     try {
       await fetch('/api/settings', {
@@ -246,6 +247,7 @@ export default function FollowTheSun() {
       });
     } catch (error) {
       console.error('Error saving categories:', error);
+      setCategories(previousCategories);
     }
   };
 
@@ -448,7 +450,13 @@ export default function FollowTheSun() {
 
     // Build a Set of date strings that have at least one entry
     const datesWithEntries = new Set(
-      entries.map(e => new Date(e.date).toISOString().split('T')[0])
+      entries.map(e => {
+        const d = new Date(e.date);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+      })
     );
 
     // Returns YYYY-MM-DD for today offset by n days
