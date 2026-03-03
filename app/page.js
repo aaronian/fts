@@ -768,7 +768,7 @@ export default function FollowTheSun() {
         </div>
 
         {/* Categories */}
-        <div>
+        <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(122, 140, 111, 0.2)' }}>
           <h3 style={{ fontSize: '0.9rem', color: '#7a8c6f', marginBottom: '0.75rem', fontWeight: '600' }}>Categories</h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.75rem' }}>
             {categories.map(cat => (
@@ -789,6 +789,7 @@ export default function FollowTheSun() {
               onChange={(e) => setNewCategoryInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addCategory()}
               placeholder="New category"
+              maxLength={30}
               style={{ flex: 1, padding: '0.5rem', border: '2px solid #c4d5b8', borderRadius: '8px', fontSize: '0.8rem', fontFamily: 'inherit' }}
             />
             <button onClick={addCategory} style={{ background: 'rgba(107, 142, 90, 0.15)', border: 'none', borderRadius: '8px', padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem', color: '#5a7a4d', fontWeight: '600' }}>Add</button>
