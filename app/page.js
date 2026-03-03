@@ -46,6 +46,8 @@ export default function FollowTheSun() {
   const [editActivity, setEditActivity] = useState('');
   const [editCustomDuration, setEditCustomDuration] = useState('');
   const [editDate, setEditDate] = useState('');
+  const [note, setNote] = useState('');
+  const [editNote, setEditNote] = useState('');
 
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [newCategoryInput, setNewCategoryInput] = useState('');
@@ -318,7 +320,8 @@ export default function FollowTheSun() {
       id: Date.now(),
       date: selectedDate.toISOString(),
       duration: finalDuration,
-      activity: activity
+      activity: activity,
+      note: note.trim()
     };
 
     const updatedEntries = [newEntry, ...entries];
@@ -338,6 +341,7 @@ export default function FollowTheSun() {
     setActivity('');
     setCustomDuration('');
     setEntryDate('');
+    setNote('');
     setShowAddEntry(false);
   };
 
@@ -345,6 +349,7 @@ export default function FollowTheSun() {
     setEditingId(entry.id);
     setEditDate(new Date(entry.date).toISOString().split('T')[0]);
     setEditActivity(entry.activity);
+    setEditNote(entry.note || '');
     if (quickTimes.includes(entry.duration)) {
       setEditDuration(entry.duration);
       setEditCustomDuration('');
@@ -360,6 +365,7 @@ export default function FollowTheSun() {
     setEditActivity('');
     setEditCustomDuration('');
     setEditDate('');
+    setEditNote('');
   };
 
   const saveEdit = async (entryId) => {
@@ -372,7 +378,7 @@ export default function FollowTheSun() {
     const selectedDate = new Date(editDate + 'T12:00:00');
     const updatedEntries = entries.map(entry => {
       if (entry.id === entryId) {
-        return { ...entry, date: selectedDate.toISOString(), duration: finalDuration, activity: editActivity };
+        return { ...entry, date: selectedDate.toISOString(), duration: finalDuration, activity: editActivity, note: editNote.trim() };
       }
       return entry;
     });
@@ -853,9 +859,22 @@ export default function FollowTheSun() {
               <input type="number" value={customDuration} onChange={(e) => { setCustomDuration(e.target.value); setDuration(''); }} placeholder="Custom minutes" style={{ width: '100%', padding: '0.75rem', border: customDuration ? '2px solid #6b8e5a' : '2px solid #c4d5b8', borderRadius: '10px', fontSize: '0.9rem', fontFamily: 'inherit', boxSizing: 'border-box' }} />
             </div>
 
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', color: '#7a8c6f', marginBottom: '0.5rem', fontWeight: '600', fontSize: '0.85rem' }}>
+                Note <span style={{ fontWeight: '400' }}>(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="How did it feel?"
+                style={{ width: '100%', padding: '0.75rem', border: '2px solid #c4d5b8', borderRadius: '10px', fontSize: '0.9rem', fontFamily: 'inherit', boxSizing: 'border-box' }}
+              />
+            </div>
+
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button onClick={addEntry} style={{ flex: 1, background: 'linear-gradient(135deg, #6b8e5a 0%, #8fac7e 100%)', color: 'white', border: 'none', padding: '0.85rem', borderRadius: '10px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer' }}>Save</button>
-              <button onClick={() => { setShowAddEntry(false); setDuration(''); setActivity(''); setCustomDuration(''); setEntryDate(''); }} style={{ flex: 1, background: 'rgba(122, 140, 111, 0.2)', color: '#5a7a4d', border: 'none', padding: '0.85rem', borderRadius: '10px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={() => { setShowAddEntry(false); setDuration(''); setActivity(''); setCustomDuration(''); setEntryDate(''); setNote(''); }} style={{ flex: 1, background: 'rgba(122, 140, 111, 0.2)', color: '#5a7a4d', border: 'none', padding: '0.85rem', borderRadius: '10px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer' }}>Cancel</button>
             </div>
           </div>
         )}
@@ -970,6 +989,13 @@ export default function FollowTheSun() {
                       ))}
                     </div>
                     <input type="number" value={editCustomDuration} onChange={(e) => { setEditCustomDuration(e.target.value); setEditDuration(''); }} placeholder="Custom" style={{ width: '100%', padding: '0.5rem', border: '2px solid #c4d5b8', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '0.75rem', boxSizing: 'border-box' }} />
+                    <input
+                      type="text"
+                      value={editNote}
+                      onChange={(e) => setEditNote(e.target.value)}
+                      placeholder="Note (optional)"
+                      style={{ width: '100%', padding: '0.5rem', border: '2px solid #c4d5b8', borderRadius: '8px', fontSize: '0.85rem', marginBottom: '0.75rem', boxSizing: 'border-box' }}
+                    />
                     <div style={{ display: 'flex', gap: '0.5rem' }}>
                       <button onClick={() => saveEdit(entry.id)} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', background: 'linear-gradient(135deg, #6b8e5a 0%, #8fac7e 100%)', color: 'white', border: 'none', padding: '0.6rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer' }}><Check size={16} /> Save</button>
                       <button onClick={cancelEdit} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem', background: 'rgba(122, 140, 111, 0.2)', color: '#5a7a4d', border: 'none', padding: '0.6rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer' }}><X size={16} /> Cancel</button>
@@ -980,6 +1006,7 @@ export default function FollowTheSun() {
                     <div>
                       <div style={{ fontSize: '1rem', fontWeight: '700', color: '#5a7a4d' }}>{Math.floor(entry.duration / 60) > 0 && `${Math.floor(entry.duration / 60)}h `}{entry.duration % 60}m</div>
                       <div style={{ fontSize: '0.85rem', color: '#7a8c6f' }}>{entry.activity}</div>
+                      {entry.note && <div style={{ fontSize: '0.8rem', color: '#7a8c6f', fontStyle: 'italic', marginTop: '0.2rem' }}>{entry.note}</div>}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <div style={{ fontSize: '0.8rem', color: '#7a8c6f' }}>{new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
