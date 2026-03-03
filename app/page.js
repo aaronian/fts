@@ -455,7 +455,10 @@ export default function FollowTheSun() {
     const offsetDate = (n) => {
       const d = new Date();
       d.setDate(d.getDate() + n);
-      return d.toISOString().split('T')[0];
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
     };
 
     // Count current streak backwards from today (or yesterday if nothing today)
@@ -470,10 +473,19 @@ export default function FollowTheSun() {
     const sortedDates = [...datesWithEntries].sort();
     let best = sortedDates.length > 0 ? 1 : 0;
     let runLength = 1;
+    const msPerDay = 1000 * 60 * 60 * 24;
     for (let i = 1; i < sortedDates.length; i++) {
-      const prev = new Date(sortedDates[i - 1]);
-      const curr = new Date(sortedDates[i]);
-      const diffDays = (curr - prev) / (1000 * 60 * 60 * 24);
+      const prevMs = Date.UTC(
+        +sortedDates[i - 1].slice(0, 4),
+        +sortedDates[i - 1].slice(5, 7) - 1,
+        +sortedDates[i - 1].slice(8, 10)
+      );
+      const currMs = Date.UTC(
+        +sortedDates[i].slice(0, 4),
+        +sortedDates[i].slice(5, 7) - 1,
+        +sortedDates[i].slice(8, 10)
+      );
+      const diffDays = (currMs - prevMs) / msPerDay;
       if (diffDays === 1) {
         runLength++;
         if (runLength > best) best = runLength;
