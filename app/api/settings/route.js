@@ -20,7 +20,7 @@ export async function GET(request) {
 
 export async function POST(request) {
   const body = await request.json();
-  const { userId, ouraToken } = body;
+  const { userId, ...newSettings } = body;
 
   if (!userId) {
     return NextResponse.json({ error: 'User ID required' }, { status: 400 });
@@ -28,7 +28,7 @@ export async function POST(request) {
 
   try {
     const existing = await kv.get(`settings:${userId}`) || {};
-    const updated = { ...existing, ouraToken };
+    const updated = { ...existing, ...newSettings };
     await kv.set(`settings:${userId}`, updated);
     return NextResponse.json({ success: true });
   } catch (error) {
