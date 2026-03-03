@@ -443,6 +443,48 @@ export default function FollowTheSun() {
     };
   };
 
+  const getStreakStats = () => {
+    if (entries.length === 0) return { current: 0, best: 0 };
+
+    // Build a Set of date strings that have at least one entry
+    const datesWithEntries = new Set(
+      entries.map(e => new Date(e.date).toISOString().split('T')[0])
+    );
+
+    // Returns YYYY-MM-DD for today offset by n days
+    const offsetDate = (n) => {
+      const d = new Date();
+      d.setDate(d.getDate() + n);
+      return d.toISOString().split('T')[0];
+    };
+
+    // Count current streak backwards from today (or yesterday if nothing today)
+    let current = 0;
+    let checkDay = datesWithEntries.has(offsetDate(0)) ? 0 : -1;
+    while (datesWithEntries.has(offsetDate(checkDay))) {
+      current++;
+      checkDay--;
+    }
+
+    // Find best streak across all entries
+    const sortedDates = [...datesWithEntries].sort();
+    let best = sortedDates.length > 0 ? 1 : 0;
+    let runLength = 1;
+    for (let i = 1; i < sortedDates.length; i++) {
+      const prev = new Date(sortedDates[i - 1]);
+      const curr = new Date(sortedDates[i]);
+      const diffDays = (curr - prev) / (1000 * 60 * 60 * 24);
+      if (diffDays === 1) {
+        runLength++;
+        if (runLength > best) best = runLength;
+      } else {
+        runLength = 1;
+      }
+    }
+
+    return { current, best };
+  };
+
   // 2026 Progress stats with projection and category breakdown
   const get2026ProgressStats = () => {
     const year2026 = entries.filter(e => new Date(e.date).getFullYear() === 2026);
@@ -620,6 +662,7 @@ export default function FollowTheSun() {
   const stats = getStats();
   const yearStats = getYearStats();
   const progressStats = get2026ProgressStats();
+  const streakStats = getStreakStats();
   const sunPosition = getSunPosition();
   const moonPhase = getMoonPhase();
   const moonEvents = getNextMoonEvents();
@@ -957,6 +1000,21 @@ export default function FollowTheSun() {
             <div style={{ fontSize: '0.75rem', color: '#7a8c6f' }}>Daily avg</div>
           </div>
         </div>
+
+        {/* Streak */}
+        {(streakStats.current > 0 || streakStats.best > 0) && (
+          <div style={{ background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', borderRadius: '16px', padding: '0.75rem 1rem', marginBottom: '1rem', display: 'flex', justifyContent: 'space-around', boxShadow: '0 2px 8px rgba(90, 122, 77, 0.08)' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#5a7a4d' }}>🔥 {streakStats.current}</div>
+              <div style={{ fontSize: '0.75rem', color: '#7a8c6f' }}>Current streak</div>
+            </div>
+            <div style={{ width: '1px', background: 'rgba(122, 140, 111, 0.2)' }} />
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '1.25rem', fontWeight: '700', color: '#5a7a4d' }}>⭐ {streakStats.best}</div>
+              <div style={{ fontSize: '0.75rem', color: '#7a8c6f' }}>Best streak</div>
+            </div>
+          </div>
+        )}
 
         {/* Calendar Heatmap */}
         <div style={{ background: 'rgba(255, 255, 255, 0.7)', backdropFilter: 'blur(10px)', borderRadius: '16px', padding: '1rem', marginBottom: '1rem', boxShadow: '0 2px 8px rgba(90, 122, 77, 0.08)' }}>
