@@ -4,6 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { useUser, SignOutButton, SignIn } from '@clerk/nextjs';
 import { Sun, Moon, Plus, Pencil, Trash2, Check, X, Menu, Cloud, CloudRain, CloudSnow, Wind, Sunrise, Sunset, LogOut } from 'lucide-react';
 
+const DEFAULT_CATEGORIES = [
+  { name: 'Walking',    removable: false },
+  { name: 'Vibing',     removable: false },
+  { name: 'Playground', removable: false },
+  { name: 'Soccer',     removable: true  },
+];
+
 export default function FollowTheSun() {
   const { user, isLoaded } = useUser();
 
@@ -40,8 +47,10 @@ export default function FollowTheSun() {
   const [editCustomDuration, setEditCustomDuration] = useState('');
   const [editDate, setEditDate] = useState('');
 
-  const categories = ['Walking', 'Soccer', 'Vibing', 'Playground'];
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [newCategoryInput, setNewCategoryInput] = useState('');
   const quickTimes = [15, 30, 45, 60];
+  const categoryNames = categories.map(c => c.name);
 
   // Set default date to today when opening form
   useEffect(() => {
@@ -180,6 +189,16 @@ export default function FollowTheSun() {
           setIsTokenSet(true);
           await fetchOuraData(settings.ouraToken);
         }
+        if (settings.categories) {
+          setCategories(settings.categories);
+        } else {
+          // First-time user: save defaults so they're persisted
+          await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: uid, categories: DEFAULT_CATEGORIES })
+          });
+        }
       }
     } catch (error) {
       console.log('Error loading data:', error);
@@ -209,6 +228,31 @@ export default function FollowTheSun() {
       console.error('Error saving token:', error);
       alert('Failed to save token.');
     }
+  };
+
+  const saveCategories = async (updatedCategories) => {
+    setCategories(updatedCategories);
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, categories: updatedCategories })
+      });
+    } catch (error) {
+      console.error('Error saving categories:', error);
+    }
+  };
+
+  const addCategory = () => {
+    const trimmed = newCategoryInput.trim();
+    if (!trimmed) return;
+    if (categories.some(c => c.name.toLowerCase() === trimmed.toLowerCase())) return;
+    saveCategories([...categories, { name: trimmed, removable: true }]);
+    setNewCategoryInput('');
+  };
+
+  const removeCategory = (name) => {
+    saveCategories(categories.filter(c => c.name !== name));
   };
 
   const fetchOuraData = async (token) => {
@@ -405,7 +449,7 @@ export default function FollowTheSun() {
     // Detailed category stats
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const categoryStats = {};
-    categories.forEach(cat => {
+    categoryNames.forEach(cat => {
       const catEntries = year2026.filter(e => e.activity === cat);
       const catMinutes = catEntries.reduce((sum, e) => sum + e.duration, 0);
       const sessionCount = catEntries.length;
@@ -758,7 +802,7 @@ export default function FollowTheSun() {
             <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', color: '#7a8c6f', marginBottom: '0.5rem', fontWeight: '600', fontSize: '0.85rem' }}>Activity</label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-                {categories.map(cat => (
+                {categoryNames.map(cat => (
                   <button key={cat} onClick={() => setActivity(cat)} style={{ background: activity === cat ? 'linear-gradient(135deg, #6b8e5a 0%, #8fac7e 100%)' : 'rgba(196, 213, 184, 0.3)', color: activity === cat ? 'white' : '#5a7a4d', border: activity === cat ? 'none' : '2px solid #c4d5b8', padding: '0.75rem', borderRadius: '10px', fontSize: '0.95rem', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' }}>{cat}</button>
                 ))}
               </div>
@@ -817,7 +861,7 @@ export default function FollowTheSun() {
               }}
             >
               <option value="">Select an activity...</option>
-              {categories.map(cat => (
+              {categoryNames.map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
@@ -881,7 +925,7 @@ export default function FollowTheSun() {
                       <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} max={new Date().toISOString().split('T')[0]} style={{ width: '100%', padding: '0.6rem', border: '2px solid #c4d5b8', borderRadius: '8px', fontSize: '0.9rem', fontFamily: 'inherit', boxSizing: 'border-box', color: '#5a7a4d' }} />
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem', marginBottom: '0.75rem' }}>
-                      {categories.map(cat => (
+                      {categoryNames.map(cat => (
                         <button key={cat} onClick={() => setEditActivity(cat)} style={{ background: editActivity === cat ? 'linear-gradient(135deg, #6b8e5a 0%, #8fac7e 100%)' : 'rgba(196, 213, 184, 0.3)', color: editActivity === cat ? 'white' : '#5a7a4d', border: editActivity === cat ? 'none' : '2px solid #c4d5b8', padding: '0.4rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer', fontFamily: 'inherit' }}>{cat}</button>
                       ))}
                     </div>
