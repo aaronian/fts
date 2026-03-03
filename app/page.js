@@ -766,6 +766,34 @@ export default function FollowTheSun() {
 
           {renderOuraChart()}
         </div>
+
+        {/* Categories */}
+        <div>
+          <h3 style={{ fontSize: '0.9rem', color: '#7a8c6f', marginBottom: '0.75rem', fontWeight: '600' }}>Categories</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.75rem' }}>
+            {categories.map(cat => (
+              <div key={cat.name} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: 'rgba(107, 142, 90, 0.15)', borderRadius: '16px', padding: '0.3rem 0.6rem', fontSize: '0.8rem', color: '#5a7a4d' }}>
+                {cat.name}
+                {cat.removable && (
+                  <button onClick={() => removeCategory(cat.name)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', color: '#7a8c6f' }}>
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <input
+              type="text"
+              value={newCategoryInput}
+              onChange={(e) => setNewCategoryInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && addCategory()}
+              placeholder="New category"
+              style={{ flex: 1, padding: '0.5rem', border: '2px solid #c4d5b8', borderRadius: '8px', fontSize: '0.8rem', fontFamily: 'inherit' }}
+            />
+            <button onClick={addCategory} style={{ background: 'rgba(107, 142, 90, 0.15)', border: 'none', borderRadius: '8px', padding: '0.5rem 0.75rem', cursor: 'pointer', fontSize: '0.8rem', color: '#5a7a4d', fontWeight: '600' }}>Add</button>
+          </div>
+        </div>
       </div>
 
       {/* Main Content */}
